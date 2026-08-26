@@ -212,6 +212,7 @@ const planetObjects = planets.map(createPlanet);
 const earth = planetObjects.find(
     planet => planet.data.name === "Earth"
 );
+
 createMoon(earth);
 
 const asteroidBelt = createAsteroidBelt();
