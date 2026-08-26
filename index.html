@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Kyu Space</title>
+
+    <!-- ⭐ Website icon -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E⭐%3C/text%3E%3C/svg%3E">
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Three.js -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+
+<body>
+
+    <!-- LOADING -->
+
+    <div id="loading">
+        <div class="loader"></div>
+        <div class="loading-text">
+            INITIALIZING KYU SPACE
+        </div>
+    </div>
+
+
+    <!-- TOP BAR -->
+
+    <header class="topbar">
+
+        <div class="brand">
+            <span class="brand-star">✦</span>
+            KYU SPACE
+        </div>
+
+        <div class="system-status">
+            <span></span>
+            SYSTEM ONLINE
+        </div>
+
+    </header>
+
+
+    <!-- THREE.JS -->
+
+    <main id="space"></main>
+
+
+    <!-- TITLE -->
+
+    <section class="hero-title">
+
+        <div class="eyebrow">
+            INTERACTIVE SOLAR SYSTEM
+        </div>
+
+        <h1>
+            EXPLORE
+            <span>THE UNIVERSE</span>
+        </h1>
+
+        <p>
+            Drag to rotate · Scroll to zoom · Click a planet
+        </p>
+
+    </section>
+
+
+    <!-- CONTROL BAR -->
+
+    <div class="control-bar">
+
+        <button id="resetView">
+            RESET
+        </button>
+
+        <button id="pauseButton">
+            PAUSE
+        </button>
+
+        <div class="speed-box">
+
+            <span>SPEED</span>
+
+            <input id="speedSlider" type="range" min="0" max="5" value="1" step="0.1">
+
+            <strong id="speedValue">
+                1.0x
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- PLANET NAME -->
+
+    <div id="hoverName"></div>
+
+
+    <!-- PLANET INFO -->
+
+    <aside class="planet-panel" id="planetPanel">
+
+        <button class="close-panel" id="closePanel">
+            ×
+        </button>
+
+        <div class="planet-type" id="planetType">
+            PLANET
+        </div>
+
+        <h2 id="planetName">
+            Earth
+        </h2>
+
+        <p class="planet-description" id="planetDescription">
+            The third planet from the Sun.
+        </p>
+
+
+        <div class="planet-data">
+
+            <div class="data-card">
+
+                <span>
+                    DISTANCE FROM SUN
+                </span>
+
+                <strong id="planetDistance">
+                    149.6 million km
+                </strong>
+
+            </div>
+
+
+            <div class="data-card">
+
+                <span>
+                    DIAMETER
+                </span>
+
+                <strong id="planetDiameter">
+                    12,742 km
+                </strong>
+
+            </div>
+
+
+            <div class="data-card">
+
+                <span>
+                    SURFACE TEMP.
+                </span>
+
+                <strong id="planetTemperature">
+                    15°C
+                </strong>
+
+            </div>
+
+
+            <div class="data-card">
+
+                <span>
+                    MOONS
+                </span>
+
+                <strong id="planetMoons">
+                    1
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="panel-divider"></div>
+
+
+        <div class="follow-status">
+
+            <span class="follow-dot"></span>
+
+            CAMERA FOLLOWING
+
+            <b id="followingName">
+                EARTH
+            </b>
+
+        </div>
+
+    </aside>
+
+
+    <!-- HELP -->
+
+    <div class="help">
+
+        <span>
+            DRAG
+        </span>
+        ROTATE
+
+        <span>
+            SCROLL
+        </span>
+        ZOOM
+
+        <span>
+            CLICK
+        </span>
+        SELECT
+
+    </div>
+
+    <footer class="site-footer">
+        © 2026
+        <span>·</span>
+        Designed by
+        <a href="https://github.com/nazhuldev" target="_blank" rel="noopener noreferrer">
+            Kyu Dev
+        </a>
+    </footer>
+
+
+    <script type="module" src="script.js"></script>
+
+</body>
+
+</html>
