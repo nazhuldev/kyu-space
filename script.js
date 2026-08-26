@@ -19,8 +19,14 @@ const renderer = new THREE.WebGLRenderer({
     powerPreference: "high-performance"
 });
 
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio, 1.5)
+);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.25;
@@ -206,8 +212,7 @@ const planetObjects = planets.map(createPlanet);
 const earth = planetObjects.find(
     planet => planet.data.name === "Earth"
 );
-
-createMoon(earth.mesh);
+createMoon(earth);
 
 const asteroidBelt = createAsteroidBelt();
 scene.add(asteroidBelt);
@@ -296,12 +301,13 @@ window.addEventListener(
 );
 
 animate();
-
-setTimeout(() => {
-    document
-        .getElementById("loading")
-        .classList.add("hidden");
-}, 900);
+window.addEventListener("load", () => {
+    requestAnimationFrame(() => {
+        document
+            .getElementById("loading")
+            .classList.add("hidden");
+    });
+});
 
 function createStars(count, radius, size, opacity) {
     const positions = new Float32Array(count * 3);
