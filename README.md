@@ -1,3 +1,3 @@
 # Kyu Space
 
-🌐 **Live Demo:** https://kyuspace.netlify.app
+🌐 **Live Demo:** ......... Under Repair
