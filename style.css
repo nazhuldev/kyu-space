@@ -195,6 +195,14 @@ body {
     letter-spacing: 1.5px;
 }
 
+.sim-date {
+    margin-top: 9px !important;
+
+    color: var(--accent) !important;
+    font-weight: 600;
+    letter-spacing: 1px !important;
+}
+
 .control-bar {
     position: fixed;
     top: 95px;
@@ -268,6 +276,41 @@ body {
     min-width: 27px;
     color: var(--accent);
     font-size: 8px;
+}
+
+.icon-button {
+    width: 30px;
+    height: 30px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--border);
+    border-radius: 7px;
+
+    background: rgba(255, 255, 255, 0.04);
+
+    color: rgba(255, 255, 255, 0.65);
+
+    font-size: 13px;
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background 0.25s ease,
+        color 0.25s ease,
+        transform 0.4s ease;
+}
+
+.icon-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.icon-button:active {
+    transform: rotate(-45deg);
 }
 
 #hoverName {

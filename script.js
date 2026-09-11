@@ -108,7 +108,11 @@ const planetData = [
         radius: 0.45,
         distance: 6,
         color: 0x8c8c8c,
-        orbitSpeed: 0.018,
+        period: 87.969,
+        eccentricity: 0.20563,
+        meanLongitude: 252.25084,
+        perihelion: 77.45779,
+        rotationPeriod: 58.646,
         info: {
             type: "TERRESTRIAL PLANET",
             distance: "57.9 million km",
@@ -124,7 +128,11 @@ const planetData = [
         radius: 0.75,
         distance: 9,
         color: 0xd6a85c,
-        orbitSpeed: 0.014,
+        period: 224.701,
+        eccentricity: 0.00677,
+        meanLongitude: 181.97973,
+        perihelion: 131.60261,
+        rotationPeriod: -243.025,
         info: {
             type: "TERRESTRIAL PLANET",
             distance: "108.2 million km",
@@ -140,7 +148,11 @@ const planetData = [
         radius: 0.85,
         distance: 13,
         color: 0x367fc8,
-        orbitSpeed: 0.01,
+        period: 365.256,
+        eccentricity: 0.01671,
+        meanLongitude: 100.46435,
+        perihelion: 102.94719,
+        rotationPeriod: 1,
         info: {
             type: "TERRESTRIAL PLANET",
             distance: "149.6 million km",
@@ -156,7 +168,11 @@ const planetData = [
         radius: 0.65,
         distance: 17,
         color: 0xb94a36,
-        orbitSpeed: 0.008,
+        period: 686.98,
+        eccentricity: 0.0934,
+        meanLongitude: 355.45332,
+        perihelion: 336.04084,
+        rotationPeriod: 1.02596,
         info: {
             type: "TERRESTRIAL PLANET",
             distance: "227.9 million km",
@@ -172,7 +188,11 @@ const planetData = [
         radius: 1.8,
         distance: 24,
         color: 0xc69c72,
-        orbitSpeed: 0.004,
+        period: 4332.589,
+        eccentricity: 0.04849,
+        meanLongitude: 34.40438,
+        perihelion: 14.75385,
+        rotationPeriod: 0.41354,
         info: {
             type: "GAS GIANT",
             distance: "778.5 million km",
@@ -188,7 +208,11 @@ const planetData = [
         radius: 1.5,
         distance: 33,
         color: 0xd8bf91,
-        orbitSpeed: 0.003,
+        period: 10759.22,
+        eccentricity: 0.05551,
+        meanLongitude: 49.94432,
+        perihelion: 92.43194,
+        rotationPeriod: 0.44401,
         info: {
             type: "GAS GIANT",
             distance: "1.43 billion km",
@@ -204,7 +228,11 @@ const planetData = [
         radius: 1.05,
         distance: 41,
         color: 0x75d0d6,
-        orbitSpeed: 0.002,
+        period: 30685.4,
+        eccentricity: 0.04686,
+        meanLongitude: 313.23218,
+        perihelion: 170.96424,
+        rotationPeriod: -0.71833,
         info: {
             type: "ICE GIANT",
             distance: "2.87 billion km",
@@ -220,7 +248,11 @@ const planetData = [
         radius: 1,
         distance: 49,
         color: 0x4169d8,
-        orbitSpeed: 0.0015,
+        period: 60189,
+        eccentricity: 0.00895,
+        meanLongitude: 304.88003,
+        perihelion: 44.97135,
+        rotationPeriod: 0.6713,
         info: {
             type: "ICE GIANT",
             distance: "4.50 billion km",
@@ -270,6 +302,7 @@ const hoverName = document.getElementById("hoverName");
 const pauseButton = document.getElementById("pauseButton");
 const speedSlider = document.getElementById("speedSlider");
 const speedValue = document.getElementById("speedValue");
+const resetSpeedButton = document.getElementById("resetSpeed");
 
 let hoveredPlanet = null;
 let selectedPlanet = null;
@@ -278,7 +311,24 @@ let followingPlanet = null;
 let lastFollowPosition = new THREE.Vector3();
 
 let paused = false;
+
+// timeScale = 1 nghĩa là chạy đúng tốc độ thời gian thực
+// (1 giây ngoài đời = 1 giây mô phỏng). Lớn hơn 1 = tua nhanh hơn thời gian thực.
 let timeScale = 1;
+
+// Mốc thiên văn chuẩn J2000.0 (01/01/2000, 12:00 UTC) - dùng để tính
+// vị trí thật của các hành tinh tại thời điểm hiện tại.
+const J2000_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
+
+// 1 ngày = 86400 giây - dùng để quy đổi giây thật sang ngày mô phỏng.
+const SECONDS_PER_DAY = 86400;
+
+// Khởi tạo bằng đúng số ngày từ J2000 đến hiện tại -> hành tinh xuất
+// hiện ở vị trí thật của chúng ngay khi tải trang.
+let simulatedDays = (Date.now() - J2000_MS) / 86400000;
+
+const simDateEl = document.getElementById("simDate");
+let simDateAccumulator = 0;
 
 let pointerDown = false;
 let pointerButton = -1;
@@ -372,6 +422,17 @@ speedSlider.addEventListener(
     }
 );
 
+resetSpeedButton.addEventListener(
+    "click",
+    () => {
+        timeScale = 1;
+        speedSlider.value = "1";
+
+        speedValue.textContent =
+            `${timeScale.toFixed(1)}x`;
+    }
+);
+
 window.addEventListener(
     "keydown",
     event => {
@@ -399,6 +460,7 @@ requestAnimationFrame(() => {
         .classList.add("hidden");
 });
 
+updateSimDateDisplay();
 animate();
 
 function createStars(
@@ -488,41 +550,142 @@ function createSunGlow(
     return glow;
 }
 
-function createOrbit(
-    radius
+function createOrbitPath(
+    semiMajorAxis,
+    eccentricity,
+    perihelionDeg
 ) {
-    const geometry =
-        new THREE.RingGeometry(
-            radius - 0.012,
-            radius + 0.012,
-            96
+    const segments = 128;
+    const points = [];
+    const perihelionRad =
+        THREE.MathUtils.degToRad(
+            perihelionDeg
         );
 
+    for (let i = 0; i <= segments; i++) {
+        const trueAnomaly =
+            (i / segments) * Math.PI * 2;
+
+        // Bán kính tại 1 điểm bất kỳ trên elip (công thức quỹ đạo dạng cực, gốc tại tiêu điểm = Mặt Trời)
+        const r =
+            (semiMajorAxis *
+                (1 - eccentricity * eccentricity)) /
+            (1 + eccentricity * Math.cos(trueAnomaly));
+
+        const angle =
+            trueAnomaly + perihelionRad;
+
+        points.push(
+            new THREE.Vector3(
+                Math.cos(angle) * r,
+                0,
+                Math.sin(angle) * r
+            )
+        );
+    }
+
+    const geometry =
+        new THREE.BufferGeometry()
+            .setFromPoints(points);
+
     const material =
-        new THREE.MeshBasicMaterial({
+        new THREE.LineBasicMaterial({
             color: 0xffffff,
             transparent: true,
-            opacity: 0.085,
-            side: THREE.DoubleSide
+            opacity: 0.085
         });
 
     const orbit =
-        new THREE.Mesh(
+        new THREE.LineLoop(
             geometry,
             material
         );
 
-    orbit.rotation.x =
-        Math.PI / 2;
-
     scene.add(orbit);
+}
+
+// Giải phương trình Kepler M = E - e·sin(E) bằng Newton-Raphson
+// để tìm dị thường lệch tâm (eccentric anomaly) E từ dị thường trung bình M.
+function solveKeplerEquation(
+    meanAnomaly,
+    eccentricity
+) {
+    let E = meanAnomaly;
+
+    for (let i = 0; i < 6; i++) {
+        E -=
+            (E -
+                eccentricity * Math.sin(E) -
+                meanAnomaly) /
+            (1 - eccentricity * Math.cos(E));
+    }
+
+    return E;
+}
+
+// Tính vị trí (x, z) thật của hành tinh tại thời điểm "days" (số ngày
+// tính từ mốc J2000), dựa trên các phần tử quỹ đạo Kepler thật của nó.
+function computeOrbitPosition(
+    data,
+    days
+) {
+    const meanMotion =
+        360 / data.period; // độ/ngày
+
+    const meanLongitudeNow =
+        data.meanLongitude +
+        meanMotion * days;
+
+    let meanAnomalyDeg =
+        (meanLongitudeNow - data.perihelion) % 360;
+
+    if (meanAnomalyDeg < 0) {
+        meanAnomalyDeg += 360;
+    }
+
+    const meanAnomaly =
+        THREE.MathUtils.degToRad(
+            meanAnomalyDeg
+        );
+
+    const E =
+        solveKeplerEquation(
+            meanAnomaly,
+            data.eccentricity
+        );
+
+    const trueAnomaly =
+        2 *
+        Math.atan2(
+            Math.sqrt(1 + data.eccentricity) *
+            Math.sin(E / 2),
+            Math.sqrt(1 - data.eccentricity) *
+            Math.cos(E / 2)
+        );
+
+    const r =
+        data.distance *
+        (1 - data.eccentricity * Math.cos(E));
+
+    const angle =
+        trueAnomaly +
+        THREE.MathUtils.degToRad(
+            data.perihelion
+        );
+
+    return {
+        x: Math.cos(angle) * r,
+        z: Math.sin(angle) * r
+    };
 }
 
 function createPlanet(
     data
 ) {
-    createOrbit(
-        data.distance
+    createOrbitPath(
+        data.distance,
+        data.eccentricity,
+        data.perihelion
     );
 
     const mesh =
@@ -594,9 +757,6 @@ function createPlanet(
     return {
         mesh,
         data,
-        angle:
-            Math.random() *
-            Math.PI * 2,
         moon: null
     };
 }
@@ -861,6 +1021,19 @@ function resetView() {
     panel.classList.remove(
         "active"
     );
+
+    // Đưa thời gian mô phỏng quay về đúng thời điểm thực tế hiện tại
+    simulatedDays =
+        (Date.now() - J2000_MS) /
+        86400000;
+
+    timeScale = 1;
+    speedSlider.value = "1";
+
+    speedValue.textContent =
+        `${timeScale.toFixed(1)}x`;
+
+    updateSimDateDisplay();
 }
 
 function togglePause() {
@@ -873,41 +1046,51 @@ function togglePause() {
 }
 
 function updatePlanets(
-    delta,
-    elapsed
+    delta
 ) {
     if (paused) {
         return;
     }
 
+    const simDaysThisFrame =
+        (delta / SECONDS_PER_DAY) *
+        timeScale;
+
+    simulatedDays +=
+        simDaysThisFrame;
+
     planets.forEach(
         planet => {
-            planet.angle +=
-                planet.data.orbitSpeed *
-                timeScale;
+            const position =
+                computeOrbitPosition(
+                    planet.data,
+                    simulatedDays
+                );
 
             planet.mesh.position.x =
-                Math.cos(
-                    planet.angle
-                ) *
-                planet.data.distance;
+                position.x;
 
             planet.mesh.position.z =
-                Math.sin(
-                    planet.angle
-                ) *
-                planet.data.distance;
+                position.z;
+
+            // Mỗi hành tinh tự quay theo đúng chu kỳ thật của nó
+            // (chu kỳ âm = quay ngược, như Sao Kim và Sao Thiên Vương ngoài đời).
+            const rotationPeriod =
+                planet.data.rotationPeriod;
+
+            const rotationSpeed =
+                (Math.PI * 2 / Math.abs(rotationPeriod)) *
+                Math.sign(rotationPeriod);
 
             planet.mesh.rotation.y +=
-                delta *
-                0.45 *
-                timeScale;
+                rotationSpeed *
+                simDaysThisFrame;
 
             if (planet.moon) {
+                // Mặt Trăng quay quanh Trái Đất với chu kỳ thật ~27.322 ngày
                 const moonAngle =
-                    elapsed *
-                    1.8 *
-                    timeScale;
+                    (simulatedDays / 27.322) *
+                    Math.PI * 2;
 
                 planet.moon.position.x =
                     Math.cos(
@@ -921,6 +1104,37 @@ function updatePlanets(
             }
         }
     );
+
+    simDateAccumulator +=
+        simDaysThisFrame > 0
+            ? delta
+            : 0;
+
+    if (simDateAccumulator > 0.4) {
+        updateSimDateDisplay();
+        simDateAccumulator = 0;
+    }
+}
+
+function updateSimDateDisplay() {
+    if (!simDateEl) {
+        return;
+    }
+
+    const date =
+        new Date(
+            J2000_MS +
+            simulatedDays * 86400000
+        );
+
+    simDateEl.textContent =
+        `MÔ PHỎNG: ${date.toLocaleString(
+            "vi-VN",
+            {
+                dateStyle: "medium",
+                timeStyle: "short"
+            }
+        )}`;
 }
 
 function updateFollow() {
@@ -1007,8 +1221,7 @@ function animate() {
         delta * 0.0008;
 
     updatePlanets(
-        delta,
-        elapsed
+        delta
     );
 
     updateFollow();
